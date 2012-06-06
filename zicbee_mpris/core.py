@@ -23,10 +23,10 @@ class Player(object):
                 print >>sys.stderr, "    %s" % n.replace("org.mpris.", "")
             print >>sys.stderr, 'If you meant to use one of those players, ' \
                                 'set $MPRIS_REMOTE_PLAYER accordingly.'
-            raise SystemExit(1)
+            raise ValueError("Can't set selected backend")
         except MPRIS.NoPlayersRunning:
             print >>sys.stderr, "No MPRIS-compliant players found running."
-            raise SystemExit(1)
+            raise RuntimeError("No MPRIS player is running.")
 
 
     def set_cache(self, val):
@@ -35,7 +35,8 @@ class Player(object):
 
     def volume(self, val):
         """ Sets volume [0-100] """
-        return
+        self.mpris.player.VolumeSet(int(val))
+        return self.mpris.player.VolumeGet().real
 
     def seek(self, val):
         """ Seeks specified number of seconds (positive or negative) """
@@ -48,6 +49,7 @@ class Player(object):
     def respawn(self):
         """ Restarts the player """
         self.quit()
+#        self.mpris.root.Quit()
 
     def load(self, uri):
         """ Loads the specified URI """
@@ -62,22 +64,6 @@ class Player(object):
             print "ERR", repr(e)
 
         self.mpris.tracklist.AddTrack(uri, True)
-        '''
-        if self.p:
-            self.p.stop()
-        self.p = self.vlc.media_player_new(uri)
-        Player._finished = False
-        e = self.p.event_manager()
-        e.event_attach(vlc.EventType.MediaPlayerEndReached, self.__end_reached, None)
-        if (not '://' in uri or uri.startswith('file://')) and os.stat(uri).st_size < 100:
-            self._finished = True
-        else:
-            self.p.play()
-
-    @vlc.callbackmethod
-    def __end_reached(event, plr):
-        Player._finished = True
-        '''
 
     def quit(self):
         """ De-initialize player and wait for it to shut down """
